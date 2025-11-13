@@ -1,215 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>User Dashboard - Smart Pothole Reporter</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pothole Reporting System - User Dashboard</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
+      font-family: "Poppins", sans-serif;
       margin: 0;
-      background: #f3f4f6;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+      background: #f4f6f8;
+      color: #222;
     }
 
     header {
-      background: #111827;
-      color: white;
-      padding: 15px 20px;
+      background: #007bff;
+      color: #fff;
+      text-align: center;
+      padding: 1rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    main {
+      padding: 1.5rem;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    }
-
-    header h1 {
-      font-size: 20px;
-      margin: 0;
-    }
-
-    header button {
-      background: #1f2937;
-      border: none;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 10px;
-      cursor: pointer;
-      box-shadow: inset 2px 2px 4px #00000033, inset -2px -2px 4px #ffffff33;
-      transition: all 0.2s ease;
-    }
-
-    header button:hover {
-      background: #374151;
+      gap: 2rem;
     }
 
     #map {
-      flex: 1;
       width: 100%;
-      height: 60vh;
-      border-bottom: 2px solid #ccc;
-    }
-
-    #reportForm {
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin: 10px;
-    }
-
-    #reportForm input, #reportForm select, #reportForm button {
-      margin-top: 8px;
-      display: block;
-      width: 100%;
-      padding: 8px;
-      border-radius: 5px;
-      border: 1px solid #ddd;
-    }
-
-    #reportForm button {
-      background: #2563eb;
-      color: white;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-    }
-
-    #reportForm button:hover {
-      background: #1d4ed8;
-    }
-
-    .scroll-container {
-      background: #f9fafb;
-      padding: 15px;
-      overflow-y: auto;
-      height: 40vh;
-    }
-
-    .card {
-      background: white;
+      height: 500px;
       border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      transition: transform 0.2s ease, background 0.2s ease;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
 
-    .card:hover {
-      transform: scale(1.02);
-      background: #f3f4f6;
+    .form-container {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
     }
 
-    .severity-high { border-left: 6px solid #dc2626; }
-    .severity-medium { border-left: 6px solid #f59e0b; }
-    .severity-low { border-left: 6px solid #10b981; }
+    .form-container h2 {
+      margin-bottom: 1rem;
+      color: #007bff;
+      text-align: center;
+    }
 
-    img.thumb {
-      width: 100px;
-      height: 80px;
-      object-fit: cover;
+    label {
+      display: block;
+      margin: 0.5rem 0 0.2rem;
+      font-weight: 500;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 0.5rem;
       border-radius: 6px;
-      margin-top: 5px;
+      border: 1px solid #ccc;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .chart-container {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 700px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 350px !important;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Smart Pothole Reporter</h1>
-    <button onclick="getLocation()">📍 Use My Location</button>
-  </header>
+  <header>🗺️ Pothole Reporting System - User Dashboard</header>
 
-  <div id="map"></div>
+  <main>
+    <!-- Map -->
+    <div id="map"></div>
 
-  <section id="reportForm">
-    <h3>Report a New Pothole</h3>
-    <form id="formData" enctype="multipart/form-data">
-      <input type="text" id="latitude" name="latitude" placeholder="Latitude" required>
-      <input type="text" id="longitude" name="longitude" placeholder="Longitude" required>
-      <select name="severity" required>
-        <option value="">Select Severity</option>
-        <option>Low</option>
-        <option>Medium</option>
-        <option>High</option>
-      </select>
-      <input type="file" name="image" accept="image/*">
-      <button type="submit">Submit Report</button>
-    </form>
-  </section>
+    <!-- Form -->
+    <div class="form-container">
+      <h2>Report a Pothole</h2>
+      <form id="potholeForm">
+        <label for="description">Pothole Description:</label>
+        <textarea
+          id="description"
+          name="description"
+          rows="3"
+          placeholder="Describe the pothole..."
+          required
+        ></textarea>
 
-  <div class="scroll-container" id="reportList">
-    <h3>Reported Potholes (Sorted by Severity ↓)</h3>
-    <div id="cards"></div>
-  </div>
+        <label for="image">Upload Image:</label>
+        <input type="file" id="image" accept="image/*" capture="camera" />
+
+        <label for="location">Location (Auto Fills if using 'My Location'):</label>
+        <input type="text" id="location" placeholder="Select on map or use location" required />
+
+        <div style="text-align:center;">
+          <button type="button" id="locateBtn">📍 Use My Location</button>
+          <button type="submit">Submit Report</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Complaints Chart -->
+    <div class="chart-container">
+      <h2>Complaints Overview</h2>
+      <canvas id="complaintChart"></canvas>
+    </div>
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Initialize map
-    const map = L.map('map').setView([12.9716, 77.5946], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    let map, marker;
 
-    const markers = [];
+    document.addEventListener("DOMContentLoaded", function () {
+      initMap();
+      initChart();
+      document
+        .getElementById("locateBtn")
+        .addEventListener("click", useMyLocation);
+      document
+        .getElementById("potholeForm")
+        .addEventListener("submit", handleSubmit);
+    });
 
-    async function loadPotholes() {
-      const res = await fetch('/api/potholes_viewport?min_lat=12.8&max_lat=13.1&min_lon=77.4&max_lon=77.7');
-      const data = await res.json();
-      updateMap(data);
-      updateCards(data);
-    }
+    // Initialize Leaflet Map
+    function initMap() {
+      map = L.map("map").setView([12.9716, 77.5946], 12);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
 
-    function updateMap(data) {
-      markers.forEach(m => map.removeLayer(m));
-      data.forEach(p => {
-        const marker = L.marker([p.latitude, p.longitude]).addTo(map);
-        marker.bindPopup(`
-          <b>Severity:</b> ${p.severity}<br>
-          <b>Status:</b> ${p.status}<br>
-          ${p.image_path ? `<img src='/${p.image_path}' class='thumb'>` : ''}
-        `);
-        markers.push(marker);
+      map.on("click", function (e) {
+        const { lat, lng } = e.latlng;
+        setMarker(lat, lng);
+        document.getElementById("location").value = `${lat.toFixed(
+          5
+        )}, ${lng.toFixed(5)}`;
       });
     }
 
-    function updateCards(data) {
-      const severityOrder = { High: 3, Medium: 2, Low: 1 };
-      data.sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
-      const cardsDiv = document.getElementById('cards');
-      cardsDiv.innerHTML = '';
-      data.forEach(p => {
-        const div = document.createElement('div');
-        div.className = `card severity-${p.severity.toLowerCase()}`;
-        div.innerHTML = `
-          <b>Severity:</b> ${p.severity}<br>
-          <b>Status:</b> ${p.status}<br>
-          <b>Coordinates:</b> (${p.latitude.toFixed(3)}, ${p.longitude.toFixed(3)})<br>
-          ${p.image_path ? `<img src='/${p.image_path}' class='thumb'>` : ''}
-        `;
-        cardsDiv.appendChild(div);
-      });
+    // Set or Move Marker
+    function setMarker(lat, lng) {
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng]).addTo(map);
+      }
     }
 
-    // Get user location
-    function getLocation() {
-      navigator.geolocation.getCurrentPosition(pos => {
-        document.getElementById('latitude').value = pos.coords.latitude;
-        document.getElementById('longitude').value = pos.coords.longitude;
-        map.setView([pos.coords.latitude, pos.coords.longitude], 15);
-      });
+    // Use My Location Button
+    function useMyLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            map.setView([lat, lng], 15);
+            setMarker(lat, lng);
+            document.getElementById("location").value = `${lat.toFixed(
+              5
+            )}, ${lng.toFixed(5)}`;
+          },
+          () => alert("Location access denied or unavailable.")
+        );
+      } else {
+        alert("Geolocation not supported by this browser.");
+      }
     }
 
-    // Submit new report
-    document.getElementById('formData').onsubmit = async e => {
+    // Handle Form Submit
+    function handleSubmit(e) {
       e.preventDefault();
-      const formData = new FormData(e.target);
-      const res = await fetch('/api/report', { method: 'POST', body: formData });
-      const msg = await res.json();
-      alert(msg.message);
-      loadPotholes();
-    };
+      alert("✅ Report submitted successfully! (Demo mode)");
+      document.getElementById("potholeForm").reset();
+      if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+      }
+    }
 
-    loadPot
+    // Demo Complaint Chart
+    function initChart() {
+      const ctx = document.getElementById("complaintChart");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+          datasets: [
+            {
+              label: "Pothole Complaints",
+              data: [12, 19, 7, 23, 17, 10],
+              backgroundColor: "rgba(0, 123, 255, 0.7)",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true },
+          },
+        },
+      });
+    }
+  </script>
+</body>
+</html>
