@@ -1,0 +1,48 @@
+<!-- static/admin.html -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"/><title>Admin Panel</title>
+<style>
+  body{font-family:Arial;padding:12px;}
+  .card{border:1px solid #ddd;padding:10px;margin:8px 0;border-radius:6px;}
+</style>
+</head>
+<body>
+  <h2>Admin Panel</h2>
+  <div>
+    <button onclick="load()">Reload</button>
+  </div>
+  <div id="list"></div>
+
+  <script>
+    async function load(){
+      const res = await fetch('/api/potholes');
+      const geo = await res.json();
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      geo.features.forEach(f => {
+        const p = f.properties;
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `<b>${p.title}</b><div>${p.description}</div>
+          <div>Status: ${p.status} | Assigned: ${p.assigned_official || '—'}</div>
+          <div style="margin-top:6px;">
+            <input id="o${p.id}" placeholder="Assign official e.g. BBMP_Ward_54"/>
+            <button onclick="assign(${p.id})">Assign</button>
+          </div>`;
+        list.appendChild(el);
+      });
+    }
+
+    async function assign(id){
+      const val = document.getElementById('o'+id).value;
+      if(!val){ alert('Enter official'); return; }
+      const res = await fetch('/api/assign', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id, official: val})});
+      const j = await res.json();
+      if(j.status == 'assigned'){ alert('Assigned'); load(); } else { alert('Error'); }
+    }
+
+    load();
+  </script>
+</body>
+</html>

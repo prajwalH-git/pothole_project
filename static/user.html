@@ -1,0 +1,121 @@
+<!-- static/user.html -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Pothole Reports - User</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 10px; }
+    #map { height: 55vh; margin-bottom: 10px; }
+    .panel { margin-bottom: 10px; padding: 8px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    input, textarea { width: 100%; padding: 6px; margin: 4px 0; box-sizing: border-box; }
+    button { padding: 8px 12px; }
+  </style>
+</head>
+<body>
+  <h2>Pothole Reports (User)</h2>
+
+  <div id="map"></div>
+
+  <div class="panel">
+    <h3>Report a Pothole</h3>
+    <form id="reportForm">
+      <input name="title" placeholder="Title" required/>
+      <textarea name="description" placeholder="Description"></textarea>
+      <label>Severity (1-5)</label>
+      <input name="severity" type="number" min="1" max="5" value="3"/>
+      <label>Photo (optional)</label>
+      <input type="file" name="photo" accept="image/*" capture="environment"/>
+      <div style="display:flex; gap:8px; margin-top:6px;">
+        <button type="button" id="getLoc">Use my location</button>
+        <button type="submit">Submit Report</button>
+      </div>
+      <input type="hidden" name="lat"/>
+      <input type="hidden" name="lon"/>
+      <input name="reported_by" placeholder="Your name" />
+    </form>
+  </div>
+
+  <div class="panel">
+    <h3>Summary - Reports by Severity</h3>
+    <canvas id="barChart"></canvas>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const map = L.map('map').setView([12.9716,77.5946], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+
+    let clusterGroup = L.markerClusterGroup();
+    clusterGroup.addTo(map);
+
+    async function loadPotholes(){
+      const res = await fetch('/api/potholes');
+      const geo = await res.json();
+      clusterGroup.clearLayers();
+      const features = geo.features || [];
+      features.forEach(f => {
+        const props = f.properties;
+        const coords = f.geometry.coordinates;
+        const marker = L.marker([coords[1], coords[0]]);
+        let popup = `<b>${props.title}</b><br/>${props.description}<br/>Status: ${props.status}<br/>Reported by: ${props.reported_by}`;
+        if(props.photo) popup += `<br/><img src="${props.photo}" style="max-width:200px;display:block;margin-top:5px;">`;
+        marker.bindPopup(popup);
+        clusterGroup.addLayer(marker);
+      });
+      makeChart(features);
+    }
+
+    function makeChart(features){
+      const counts = [0,0,0,0,0];
+      features.forEach(f => {
+        const s = f.properties.severity || 1;
+        counts[s-1] = counts[s-1] + 1;
+      });
+      const ctx = document.getElementById('barChart').getContext('2d');
+      if(window.myChart) window.myChart.destroy();
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['1','2','3','4','5'],
+          datasets: [{ label:'Reports', data: counts }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    document.getElementById('getLoc').onclick = () => {
+      if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
+      navigator.geolocation.getCurrentPosition(pos => {
+        document.querySelector('input[name=lat]').value = pos.coords.latitude;
+        document.querySelector('input[name=lon]').value = pos.coords.longitude;
+        alert('Location captured!');
+      }, err => {
+        alert('Location error: ' + err.message);
+      }, { enableHighAccuracy: true });
+    };
+
+    document.getElementById('reportForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      if(!fd.get('lat') || !fd.get('lon')){
+        alert('Please capture your location first (Use my location).');
+        return;
+      }
+      const res = await fetch('/api/report', { method:'POST', body: fd });
+      const j = await res.json();
+      if(j.status === 'ok'){ alert('Reported'); e.target.reset(); loadPotholes(); }
+      else { alert('Error: ' + (j.message || JSON.stringify(j))); }
+    };
+
+    loadPotholes();
+    setInterval(loadPotholes, 30000); // refresh every 30s
+  </script>
+</body>
+</html>
