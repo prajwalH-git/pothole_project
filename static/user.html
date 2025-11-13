@@ -5,246 +5,239 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pothole Reporting System - User Dashboard</title>
 
-  <!-- Leaflet CSS -->
+  <!-- Leaflet -->
   <link
     rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body {
-      font-family: "Poppins", sans-serif;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
-      background: #f4f6f8;
-      color: #222;
+      background-color: #f4f7fb;
     }
 
     header {
       background: #007bff;
-      color: #fff;
+      color: white;
+      padding: 15px;
       text-align: center;
-      padding: 1rem;
-      font-size: 1.5rem;
+      font-size: 1.5em;
       font-weight: 600;
-      letter-spacing: 1px;
-    }
-
-    main {
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2rem;
     }
 
     #map {
-      width: 100%;
-      height: 500px;
+      height: 300px;
+      width: 95%;
+      margin: 15px auto;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
     }
 
-    .form-container {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 600px;
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
     }
 
-    .form-container h2 {
-      margin-bottom: 1rem;
-      color: #007bff;
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 500px;
+    }
+
+    .card h2 {
       text-align: center;
+      color: #007bff;
+      margin-bottom: 15px;
     }
 
-    label {
-      display: block;
-      margin: 0.5rem 0 0.2rem;
-      font-weight: 500;
-    }
-
-    input,
-    textarea {
+    input[type="text"],
+    input[type="file"],
+    textarea,
+    select {
       width: 100%;
-      padding: 0.5rem;
-      border-radius: 6px;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 12px;
       border: 1px solid #ccc;
-      margin-bottom: 1rem;
-      font-size: 1rem;
+      border-radius: 6px;
+      font-size: 1em;
     }
 
     button {
-      background: #007bff;
+      background-color: #007bff;
       color: white;
-      padding: 0.7rem 1.5rem;
+      padding: 10px 15px;
       border: none;
       border-radius: 6px;
-      font-size: 1rem;
       cursor: pointer;
-      transition: background 0.3s;
+      font-size: 1em;
+      margin-right: 5px;
     }
 
     button:hover {
-      background: #0056b3;
+      background-color: #0056b3;
     }
 
-    .chart-container {
-      background: #fff;
-      padding: 1.5rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    #complaintsChart {
       width: 100%;
-      max-width: 700px;
+      height: 300px;
     }
 
-    canvas {
-      width: 100% !important;
-      height: 350px !important;
+    .footer {
+      text-align: center;
+      color: gray;
+      padding: 15px;
+      font-size: 0.9em;
     }
   </style>
 </head>
 <body>
-  <header>🗺️ Pothole Reporting System - User Dashboard</header>
+  <header>📍 Pothole Reporting System - User Dashboard</header>
 
-  <main>
-    <!-- Map -->
-    <div id="map"></div>
+  <div id="map"></div>
 
-    <!-- Form -->
-    <div class="form-container">
+  <div class="container">
+    <div class="card">
       <h2>Report a Pothole</h2>
-      <form id="potholeForm">
-        <label for="description">Pothole Description:</label>
+      <form id="reportForm" enctype="multipart/form-data">
+        <label for="title">Pothole Title:</label>
+        <input type="text" id="title" name="title" placeholder="Enter short title..." required />
+
+        <label for="description">Description:</label>
         <textarea
           id="description"
           name="description"
           rows="3"
           placeholder="Describe the pothole..."
-          required
         ></textarea>
 
-        <label for="image">Upload Image:</label>
-        <input type="file" id="image" accept="image/*" capture="camera" />
+        <label for="photo">Upload Image:</label>
+        <input type="file" id="photo" name="photo" accept="image/*" />
 
-        <label for="location">Location (Auto Fills if using 'My Location'):</label>
-        <input type="text" id="location" placeholder="Select on map or use location" required />
+        <label for="severity">Severity:</label>
+        <select id="severity" name="severity" required>
+          <option value="1">Low</option>
+          <option value="2">Medium</option>
+          <option value="3">High</option>
+        </select>
+
+        <label for="reported_by">Your Name (optional):</label>
+        <input type="text" id="reported_by" name="reported_by" placeholder="Enter your name..." />
 
         <div style="text-align:center;">
-          <button type="button" id="locateBtn">📍 Use My Location</button>
-          <button type="submit">Submit Report</button>
+          <button type="button" onclick="getLocation()">📍 Use My Location</button>
+          <button type="submit">🚀 Report Pothole</button>
         </div>
+
+        <input type="hidden" id="lat" name="lat" />
+        <input type="hidden" id="lon" name="lon" />
       </form>
     </div>
 
-    <!-- Complaints Chart -->
-    <div class="chart-container">
+    <div class="card">
       <h2>Complaints Overview</h2>
-      <canvas id="complaintChart"></canvas>
+      <canvas id="complaintsChart"></canvas>
     </div>
-  </main>
+  </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <div class="footer">
+    &copy; 2025 Smart Governance Initiative | Powered by Geospatial Data
+  </div>
 
   <script>
-    let map, marker;
+    // Initialize map
+    var map = L.map("map").setView([12.9716, 77.5946], 10);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
 
-    document.addEventListener("DOMContentLoaded", function () {
-      initMap();
-      initChart();
-      document
-        .getElementById("locateBtn")
-        .addEventListener("click", useMyLocation);
-      document
-        .getElementById("potholeForm")
-        .addEventListener("submit", handleSubmit);
+    let marker;
+    map.on("click", function (e) {
+      if (marker) map.removeLayer(marker);
+      marker = L.marker(e.latlng).addTo(map);
+      document.getElementById("lat").value = e.latlng.lat;
+      document.getElementById("lon").value = e.latlng.lng;
+
+      // Add coordinates to description
+      const desc = document.getElementById("description");
+      desc.value += `\n📍 Location: ${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
     });
 
-    // Initialize Leaflet Map
-    function initMap() {
-      map = L.map("map").setView([12.9716, 77.5946], 12);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "&copy; OpenStreetMap contributors",
-      }).addTo(map);
-
-      map.on("click", function (e) {
-        const { lat, lng } = e.latlng;
-        setMarker(lat, lng);
-        document.getElementById("location").value = `${lat.toFixed(
-          5
-        )}, ${lng.toFixed(5)}`;
-      });
-    }
-
-    // Set or Move Marker
-    function setMarker(lat, lng) {
-      if (marker) {
-        marker.setLatLng([lat, lng]);
-      } else {
-        marker = L.marker([lat, lng]).addTo(map);
-      }
-    }
-
-    // Use My Location Button
-    function useMyLocation() {
+    // ✅ Get current location and append coordinates to description
+    function getLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            map.setView([lat, lng], 15);
-            setMarker(lat, lng);
-            document.getElementById("location").value = `${lat.toFixed(
-              5
-            )}, ${lng.toFixed(5)}`;
+            const { latitude, longitude } = pos.coords;
+            map.setView([latitude, longitude], 15);
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([latitude, longitude]).addTo(map);
+            document.getElementById("lat").value = latitude;
+            document.getElementById("lon").value = longitude;
+
+            const desc = document.getElementById("description");
+            desc.value += `\n📍 Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
           },
-          () => alert("Location access denied or unavailable.")
+          (err) => {
+            alert("⚠️ Unable to fetch location. Please allow location access.");
+          }
         );
       } else {
-        alert("Geolocation not supported by this browser.");
+        alert("❌ Geolocation is not supported by your browser.");
       }
     }
 
-    // Handle Form Submit
-    function handleSubmit(e) {
+    // ✅ Submit form
+    document.getElementById("reportForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      alert("✅ Report submitted successfully! (Demo mode)");
-      document.getElementById("potholeForm").reset();
-      if (marker) {
-        map.removeLayer(marker);
-        marker = null;
+      const formData = new FormData(e.target);
+      const res = await fetch("/api/report", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.status === "ok") {
+        alert("✅ Pothole reported successfully!");
+        e.target.reset();
+      } else {
+        alert("❌ Error: " + data.message);
       }
-    }
+    });
 
-    // Demo Complaint Chart
-    function initChart() {
-      const ctx = document.getElementById("complaintChart");
-      new Chart(ctx, {
+    // ✅ Complaints chart
+    async function loadComplaintsChart() {
+      const res = await fetch("/api/potholes");
+      const data = await res.json();
+      const low = data.features.filter((f) => f.properties.severity == 1).length;
+      const med = data.features.filter((f) => f.properties.severity == 2).length;
+      const high = data.features.filter((f) => f.properties.severity == 3).length;
+
+      new Chart(document.getElementById("complaintsChart"), {
         type: "bar",
         data: {
-          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+          labels: ["Low", "Medium", "High"],
           datasets: [
             {
               label: "Pothole Complaints",
-              data: [12, 19, 7, 23, 17, 10],
-              backgroundColor: "rgba(0, 123, 255, 0.7)",
+              data: [low, med, high],
+              backgroundColor: ["#28a745", "#ffc107", "#dc3545"],
             },
           ],
         },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true },
-          },
-        },
       });
     }
+
+    loadComplaintsChart();
   </script>
 </body>
 </html>
